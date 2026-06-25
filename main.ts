@@ -6,6 +6,47 @@ import { resolveAuth } from "./lib/auth.ts";
 export const app = new App<State>();
 const config = getConfig();
 
+const BASIC_AUTH_USER = "marugoto";
+const BASIC_AUTH_PASS = "kosen2026";
+
+function unauthorizedBasic(): Response {
+  return new Response("Unauthorized", {
+    status: 401,
+    headers: {
+      "www-authenticate": 'Basic realm="marucoder", charset="UTF-8"',
+    },
+  });
+}
+
+function isBasicAuthorized(req: Request): boolean {
+  const auth = req.headers.get("authorization");
+  if (!auth?.startsWith("Basic ")) return false;
+
+  const encoded = auth.slice(6).trim();
+  if (!encoded) return false;
+
+  let decoded = "";
+  try {
+    decoded = atob(encoded);
+  } catch {
+    return false;
+  }
+
+  const separator = decoded.indexOf(":");
+  if (separator < 0) return false;
+
+  const user = decoded.slice(0, separator);
+  const pass = decoded.slice(separator + 1);
+  return user === BASIC_AUTH_USER && pass === BASIC_AUTH_PASS;
+}
+
+app.use((ctx) => {
+  // Preflight は認証不要で通す。
+  if (ctx.req.method === "OPTIONS") return ctx.next();
+  if (!isBasicAuthorized(ctx.req)) return unauthorizedBasic();
+  return ctx.next();
+});
+
 app.use(staticFiles());
 
 app.use((ctx) => {
