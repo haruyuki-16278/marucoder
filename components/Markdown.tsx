@@ -11,10 +11,11 @@ export interface MarkdownProps {
 /**
  * Markdown 文字列をサニタイズ済み HTML としてレンダリングするコンポーネント。
  * @deno/gfm の render はデフォルトで HTML サニタイズを行うため XSS 安全。
- * スタイルは /markdown.css（GitHub Flavored Markdown CSS）に依存する。
+ * KaTeX 記法（$...$ / $$...$$）による数式にも対応する。
+ * スタイルは /markdown.css（GFM CSS + KaTeX CSS）に依存する。
  */
 export function Markdown({ source, class: className, inline }: MarkdownProps) {
-  const html = render(source ?? "", { inline });
+  const html = render(source ?? "", { inline, allowMath: true });
   return (
     <div
       data-color-mode="light"

@@ -138,7 +138,7 @@ export default define.page(async function TeacherProblemDetailPage(ctx) {
             <label class="mb-1 block text-xs font-medium text-slate-600">問題文</label>
             <textarea name="statement" rows={8} required
               class="w-full rounded border border-slate-300 px-2 py-1 text-sm font-mono">{problem.statement}</textarea>
-            <p class="mt-1 text-xs text-slate-500">Markdown 記法（見出し・リスト・表・コードブロック等）が使えます。</p>
+            <p class="mt-1 text-xs text-slate-500">Markdown 記法（見出し・リスト・表・コードブロック等）と KaTeX 数式（$...$ / $$...$$）が使えます。</p>
           </div>
           <div class="grid gap-3 md:grid-cols-3">
             <div>
