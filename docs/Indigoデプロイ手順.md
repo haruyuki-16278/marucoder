@@ -37,6 +37,18 @@ source ~/.bashrc
 deno --version
 ```
 
+### 1.3 C コンパイラ (gcc) 導入
+
+提出コードのジャッジ（コンパイル・実行）に `gcc` が必須。未導入だと提出が毎回 `IE` になる。
+
+```bash
+sudo apt -y install build-essential
+gcc --version
+```
+
+確認ポイント:
+1. `gcc --version` がバージョンを表示する（`command not found` でない）
+
 ## 2. アプリ配置
 
 ### 2.1 配置先作成

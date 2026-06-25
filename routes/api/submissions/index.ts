@@ -88,7 +88,8 @@ export const handler = define.handlers({
           compileOutput: result.compileOutput,
           finishedAt: new Date().toISOString(),
         });
-      } catch {
+      } catch (err) {
+        console.error(`[judge] submission ${submission.id} failed:`, err);
         await updateSubmissionStatus(submission.id, {
           status: "ERROR",
           verdict: "IE",
