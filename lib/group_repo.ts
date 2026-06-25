@@ -101,6 +101,38 @@ export async function listGroupMembers(groupId: string): Promise<GroupMember[]> 
   return members;
 }
 
+export interface RosterUser {
+  userId: string;
+  displayName: string;
+}
+
+export interface Roster {
+  teachers: RosterUser[];
+  students: RosterUser[];
+}
+
+// 全グループのメンバーから、教員・学生の名簿を重複なしで取得する。
+// 同一 userId が複数グループに存在しても 1 件に集約する。
+export async function getRoster(): Promise<Roster> {
+  const kv = await getKV();
+  const teacherMap = new Map<string, string>();
+  const studentMap = new Map<string, string>();
+
+  for await (const entry of kv.list<GroupMember>({ prefix: ["group_members"] })) {
+    const member = entry.value;
+    const name = member.displayName?.trim() ? member.displayName.trim() : member.userId;
+    const target = member.role === "teacher" ? teacherMap : studentMap;
+    if (!target.has(member.userId)) target.set(member.userId, name);
+  }
+
+  const toList = (map: Map<string, string>): RosterUser[] =>
+    [...map.entries()]
+      .map(([userId, displayName]) => ({ userId, displayName }))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName, "ja"));
+
+  return { teachers: toList(teacherMap), students: toList(studentMap) };
+}
+
 export async function listSeats(groupId: string): Promise<ClassroomSeat[]> {
   const kv = await getKV();
   const seats: ClassroomSeat[] = [];

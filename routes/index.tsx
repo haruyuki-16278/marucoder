@@ -1,8 +1,23 @@
 import { Head } from "fresh/runtime";
 import { define } from "../utils.ts";
+import { getRoster, type RosterUser } from "../lib/group_repo.ts";
 
-export default define.page(function Home(ctx) {
+export default define.page(async function Home(ctx) {
   const { role, userId } = ctx.state.auth;
+  const roster = await getRoster();
+
+  // 名簿が空でも選択肢が出るように、現在のユーザーとデモ用 ID を補完する。
+  const teacherOptions = withFallback(roster.teachers, [
+    ...(role === "teacher" ? [{ userId, displayName: userId }] : []),
+    { userId: "teacher-demo", displayName: "teacher-demo" },
+  ]);
+  const studentOptions = withFallback(roster.students, [
+    ...(role === "student" ? [{ userId, displayName: userId }] : []),
+    { userId: "student-demo", displayName: "student-demo" },
+  ]);
+
+  const teacherSelected = role === "teacher" ? userId : teacherOptions[0]?.userId ?? "teacher-demo";
+  const studentSelected = role === "student" ? userId : studentOptions[0]?.userId ?? "student-demo";
 
   return (
     <div class="mx-auto min-h-screen max-w-6xl px-4 py-8">
@@ -23,12 +38,16 @@ export default define.page(function Home(ctx) {
             <p class="mt-2 text-sm text-slate-600">教卓進捗、問題管理、提出監視を行います。</p>
             <input type="hidden" name="role" value="teacher" />
             <input type="hidden" name="redirectTo" value="/teacher" />
-            <input
-              type="text"
+            <select
               name="userId"
-              value={role === "teacher" ? userId : "teacher-demo"}
               class="mt-3 w-full rounded border border-slate-300 px-2 py-1 text-sm"
-            />
+            >
+              {teacherOptions.map((u) => (
+                <option key={u.userId} value={u.userId} selected={u.userId === teacherSelected}>
+                  {u.displayName === u.userId ? u.displayName : `${u.displayName}（${u.userId}）`}
+                </option>
+              ))}
+            </select>
             <button class="mt-3 rounded bg-slate-900 px-3 py-1 text-sm text-white" type="submit">教員画面へ</button>
           </form>
 
@@ -37,12 +56,16 @@ export default define.page(function Home(ctx) {
             <p class="mt-2 text-sm text-slate-600">公開中の問題閲覧と自分の提出確認を行います。</p>
             <input type="hidden" name="role" value="student" />
             <input type="hidden" name="redirectTo" value="/student" />
-            <input
-              type="text"
+            <select
               name="userId"
-              value={role === "student" ? userId : "student-demo"}
               class="mt-3 w-full rounded border border-slate-300 px-2 py-1 text-sm"
-            />
+            >
+              {studentOptions.map((u) => (
+                <option key={u.userId} value={u.userId} selected={u.userId === studentSelected}>
+                  {u.displayName === u.userId ? u.displayName : `${u.displayName}（${u.userId}）`}
+                </option>
+              ))}
+            </select>
             <button class="mt-3 rounded bg-slate-900 px-3 py-1 text-sm text-white" type="submit">学生画面へ</button>
           </form>
         </section>
@@ -76,3 +99,17 @@ export default define.page(function Home(ctx) {
     </div>
   );
 });
+
+// 名簿が空の場合に備え、最低限の選択肢（現在ユーザー/デモ）を補う。
+// 既存の userId と重複する候補は除外する。
+function withFallback(roster: RosterUser[], fallbacks: RosterUser[]): RosterUser[] {
+  if (roster.length > 0) return roster;
+  const seen = new Set<string>();
+  const result: RosterUser[] = [];
+  for (const u of fallbacks) {
+    if (seen.has(u.userId)) continue;
+    seen.add(u.userId);
+    result.push(u);
+  }
+  return result;
+}
