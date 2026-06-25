@@ -1,6 +1,7 @@
 import { Head } from "fresh/runtime";
 import { define } from "../../../utils.ts";
 import { getProblem, listTestCases } from "../../../lib/group_repo.ts";
+import { Markdown } from "../../../components/Markdown.tsx";
 
 export default define.page(async function StudentProblemDetailPage(ctx) {
   const problem = await getProblem(ctx.params.problemId);
@@ -19,7 +20,10 @@ export default define.page(async function StudentProblemDetailPage(ctx) {
 
   return (
     <div class="mx-auto max-w-5xl space-y-6 px-4 py-6">
-      <Head><title>{problem.title} | marucoder</title></Head>
+      <Head>
+        <title>{problem.title} | marucoder</title>
+        <link rel="stylesheet" href="/markdown.css" />
+      </Head>
 
       <div>
         <a href="/student/problems" class="text-sm text-slate-500 hover:underline">← 問題一覧</a>
@@ -29,7 +33,7 @@ export default define.page(async function StudentProblemDetailPage(ctx) {
       {/* 問題文 */}
       <section class="rounded border border-slate-200 bg-white p-4">
         <h2 class="mb-2 font-semibold">問題文</h2>
-        <pre class="whitespace-pre-wrap text-sm text-slate-700">{problem.statement}</pre>
+        <Markdown source={problem.statement} />
       </section>
 
       {/* 仕様 */}
@@ -38,19 +42,19 @@ export default define.page(async function StudentProblemDetailPage(ctx) {
           {problem.inputSpec && (
             <section class="rounded border border-slate-200 bg-white p-3">
               <h3 class="mb-1 text-sm font-semibold">入力仕様</h3>
-              <pre class="whitespace-pre-wrap text-xs text-slate-700">{problem.inputSpec}</pre>
+              <Markdown source={problem.inputSpec} />
             </section>
           )}
           {problem.outputSpec && (
             <section class="rounded border border-slate-200 bg-white p-3">
               <h3 class="mb-1 text-sm font-semibold">出力仕様</h3>
-              <pre class="whitespace-pre-wrap text-xs text-slate-700">{problem.outputSpec}</pre>
+              <Markdown source={problem.outputSpec} />
             </section>
           )}
           {problem.constraints && (
             <section class="rounded border border-slate-200 bg-white p-3">
               <h3 class="mb-1 text-sm font-semibold">制約</h3>
-              <pre class="whitespace-pre-wrap text-xs text-slate-700">{problem.constraints}</pre>
+              <Markdown source={problem.constraints} />
             </section>
           )}
         </div>

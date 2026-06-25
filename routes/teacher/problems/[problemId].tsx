@@ -12,6 +12,7 @@ import {
   updateTestCase,
 } from "../../../lib/group_repo.ts";
 import { badRequest, notFound } from "../../../lib/http.ts";
+import { Markdown } from "../../../components/Markdown.tsx";
 
 export const handler = define.handlers({
   async POST(ctx) {
@@ -112,6 +113,7 @@ export default define.page(async function TeacherProblemDetailPage(ctx) {
     <div class="mx-auto max-w-5xl space-y-6 px-4 py-6">
       <Head>
         <title>{problem.title} | 問題管理 | marucoder</title>
+        <link rel="stylesheet" href="/markdown.css" />
       </Head>
 
       <div class="flex items-center gap-3">
@@ -136,6 +138,7 @@ export default define.page(async function TeacherProblemDetailPage(ctx) {
             <label class="mb-1 block text-xs font-medium text-slate-600">問題文</label>
             <textarea name="statement" rows={8} required
               class="w-full rounded border border-slate-300 px-2 py-1 text-sm font-mono">{problem.statement}</textarea>
+            <p class="mt-1 text-xs text-slate-500">Markdown 記法（見出し・リスト・表・コードブロック等）が使えます。</p>
           </div>
           <div class="grid gap-3 md:grid-cols-3">
             <div>
@@ -196,6 +199,38 @@ export default define.page(async function TeacherProblemDetailPage(ctx) {
             </form>
           )}
         </div>
+      </section>
+
+      {/* プレビュー（保存済みの内容を Markdown 表示） */}
+      <section class="rounded border border-slate-200 bg-white p-4">
+        <h2 class="text-lg font-semibold">プレビュー</h2>
+        <p class="mb-3 text-xs text-slate-500">学生に表示される問題文の見た目（Markdown レンダリング結果）です。保存後に反映されます。</p>
+        <div class="rounded border border-slate-100 p-3">
+          <h3 class="mb-2 text-sm font-semibold text-slate-600">問題文</h3>
+          <Markdown source={problem.statement} />
+        </div>
+        {(problem.inputSpec || problem.outputSpec || problem.constraints) && (
+          <div class="mt-3 grid gap-3 md:grid-cols-3">
+            {problem.inputSpec && (
+              <div class="rounded border border-slate-100 p-3">
+                <h3 class="mb-1 text-sm font-semibold text-slate-600">入力仕様</h3>
+                <Markdown source={problem.inputSpec} />
+              </div>
+            )}
+            {problem.outputSpec && (
+              <div class="rounded border border-slate-100 p-3">
+                <h3 class="mb-1 text-sm font-semibold text-slate-600">出力仕様</h3>
+                <Markdown source={problem.outputSpec} />
+              </div>
+            )}
+            {problem.constraints && (
+              <div class="rounded border border-slate-100 p-3">
+                <h3 class="mb-1 text-sm font-semibold text-slate-600">制約</h3>
+                <Markdown source={problem.constraints} />
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* テストケース */}
