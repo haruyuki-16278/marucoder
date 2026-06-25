@@ -1,5 +1,5 @@
 import { getKV } from "./kv.ts";
-import type { ClassroomSeat, Group, GroupMember, Submission } from "./models.ts";
+import type { ClassroomSeat, Group, GroupMember, Problem, Submission } from "./models.ts";
 
 export type SeatInput = {
   row: number;
@@ -108,6 +108,114 @@ export async function listSeats(groupId: string): Promise<ClassroomSeat[]> {
     seats.push(entry.value);
   }
   return seats.sort((a, b) => (a.row - b.row) || (a.col - b.col));
+}
+
+export async function createProblem(input: {
+  title: string;
+  statement: string;
+  inputSpec?: string;
+  outputSpec?: string;
+  constraints?: string;
+  authorUserId: string;
+}): Promise<Problem> {
+  const kv = await getKV();
+  const now = new Date().toISOString();
+
+  const problem: Problem = {
+    id: newId("problem"),
+    title: input.title,
+    statement: input.statement,
+    inputSpec: input.inputSpec ?? "",
+    outputSpec: input.outputSpec ?? "",
+    constraints: input.constraints ?? "",
+    status: "draft",
+    authorUserId: input.authorUserId,
+    createdAt: now,
+    updatedAt: now,
+    publishedAt: null,
+  };
+
+  await kv.set(["problems", problem.id], problem);
+  return problem;
+}
+
+export async function getProblem(problemId: string): Promise<Problem | null> {
+  const kv = await getKV();
+  const result = await kv.get<Problem>(["problems", problemId]);
+  return result.value;
+}
+
+export async function listProblems(params?: {
+  includeArchived?: boolean;
+  onlyPublished?: boolean;
+}): Promise<Problem[]> {
+  const kv = await getKV();
+  const problems: Problem[] = [];
+
+  for await (const entry of kv.list<Problem>({ prefix: ["problems"] })) {
+    const problem = entry.value;
+    if (!params?.includeArchived && problem.status === "archived") continue;
+    if (params?.onlyPublished && problem.status !== "published") continue;
+    problems.push(problem);
+  }
+
+  return problems.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function updateProblem(problemId: string, patch: {
+  title?: string;
+  statement?: string;
+  inputSpec?: string;
+  outputSpec?: string;
+  constraints?: string;
+}): Promise<Problem | null> {
+  const kv = await getKV();
+  const current = await getProblem(problemId);
+  if (!current) return null;
+
+  const next: Problem = {
+    ...current,
+    title: patch.title ?? current.title,
+    statement: patch.statement ?? current.statement,
+    inputSpec: patch.inputSpec ?? current.inputSpec,
+    outputSpec: patch.outputSpec ?? current.outputSpec,
+    constraints: patch.constraints ?? current.constraints,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await kv.set(["problems", problemId], next);
+  return next;
+}
+
+export async function setProblemPublished(problemId: string, publish: boolean): Promise<Problem | null> {
+  const kv = await getKV();
+  const current = await getProblem(problemId);
+  if (!current) return null;
+
+  const next: Problem = {
+    ...current,
+    status: publish ? "published" : "draft",
+    publishedAt: publish ? (current.publishedAt ?? new Date().toISOString()) : null,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await kv.set(["problems", problemId], next);
+  return next;
+}
+
+export async function archiveProblem(problemId: string): Promise<Problem | null> {
+  const kv = await getKV();
+  const current = await getProblem(problemId);
+  if (!current) return null;
+
+  const next: Problem = {
+    ...current,
+    status: "archived",
+    updatedAt: new Date().toISOString(),
+  };
+
+  await kv.set(["problems", problemId], next);
+  return next;
 }
 
 export async function upsertSeats(groupId: string, seats: SeatInput[]): Promise<number> {

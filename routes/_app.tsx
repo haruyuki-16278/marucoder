@@ -1,6 +1,9 @@
 import { define } from "../utils.ts";
 
-export default define.page(function App({ Component }) {
+export default define.page(function App(ctx) {
+  const role = ctx.state.auth.role;
+  const userId = ctx.state.auth.userId;
+
   return (
     <html>
       <head>
@@ -12,11 +15,26 @@ export default define.page(function App({ Component }) {
         <header class="border-b border-slate-200 bg-white">
           <nav class="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 text-sm">
             <a href="/" class="font-semibold text-slate-700 hover:text-slate-900">ホーム</a>
-            <a href="/submissions" class="font-semibold text-slate-700 hover:text-slate-900">提出履歴</a>
-            <a href="/teacher/dashboard" class="font-semibold text-slate-700 hover:text-slate-900">教卓進捗</a>
+            {role === "teacher"
+              ? (
+                <>
+                  <a href="/teacher" class="font-semibold text-slate-700 hover:text-slate-900">教員トップ</a>
+                  <a href="/teacher/problems" class="font-semibold text-slate-700 hover:text-slate-900">問題管理</a>
+                  <a href="/teacher/dashboard" class="font-semibold text-slate-700 hover:text-slate-900">教卓進捗</a>
+                  <a href="/submissions" class="font-semibold text-slate-700 hover:text-slate-900">提出履歴</a>
+                </>
+              )
+              : (
+                <>
+                  <a href="/student" class="font-semibold text-slate-700 hover:text-slate-900">学生トップ</a>
+                  <a href="/student/problems" class="font-semibold text-slate-700 hover:text-slate-900">問題一覧</a>
+                  <a href="/student/submissions" class="font-semibold text-slate-700 hover:text-slate-900">自分の提出</a>
+                </>
+              )}
+            <span class="ml-auto text-xs text-slate-500">{role}:{userId}</span>
           </nav>
         </header>
-        <Component />
+        <ctx.Component />
       </body>
     </html>
   );

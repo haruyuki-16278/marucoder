@@ -1,5 +1,20 @@
 export type Role = "teacher" | "student";
 export type Verdict = "AC" | "WA" | "TLE" | "RE" | "CE" | "IE";
+export type ProblemStatus = "draft" | "published" | "archived";
+
+export interface Problem {
+  id: string;
+  title: string;
+  statement: string;
+  inputSpec: string;
+  outputSpec: string;
+  constraints: string;
+  status: ProblemStatus;
+  authorUserId: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+}
 
 export interface Group {
   id: string;

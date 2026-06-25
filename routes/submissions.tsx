@@ -1,14 +1,26 @@
 import { Head } from "fresh/runtime";
 import { define } from "../utils.ts";
-import { listSubmissions } from "../lib/group_repo.ts";
+import { requireAuth } from "../lib/auth.ts";
+import { listProblems, listSubmissions } from "../lib/group_repo.ts";
+
+export const handler = define.handlers({
+  GET(ctx) {
+    const authError = requireAuth(ctx.state);
+    if (authError) return authError;
+    return ctx.render(null);
+  },
+});
 
 export default define.page(async function SubmissionsPage(ctx) {
   const url = new URL(ctx.req.url);
-  const userId = url.searchParams.get("userId") ?? undefined;
+  const requestedUserId = url.searchParams.get("userId") ?? undefined;
   const problemId = url.searchParams.get("problemId") ?? undefined;
   const verdict = url.searchParams.get("verdict") ?? undefined;
+  const userId = ctx.state.auth.role === "teacher" ? requestedUserId : ctx.state.auth.userId;
 
   const submissions = await listSubmissions({ userId, problemId, verdict });
+  const problems = await listProblems({ includeArchived: true });
+  const problemNameById = new Map(problems.map((problem) => [problem.id, problem.title]));
 
   return (
     <div class="mx-auto max-w-4xl px-4 py-6">
@@ -42,7 +54,7 @@ export default define.page(async function SubmissionsPage(ctx) {
                 <tr key={s.id} class="border-b border-slate-100">
                   <td class="px-3 py-2">{s.id}</td>
                   <td class="px-3 py-2">{s.userId}</td>
-                  <td class="px-3 py-2">{s.problemId}</td>
+                  <td class="px-3 py-2">{problemNameById.get(s.problemId) ?? s.problemId}</td>
                   <td class="px-3 py-2">{s.verdict ?? "-"}</td>
                   <td class="px-3 py-2">{new Date(s.createdAt).toLocaleString("ja-JP")}</td>
                 </tr>

@@ -1,4 +1,5 @@
 import { define } from "../../../../../utils.ts";
+import { requireTeacher } from "../../../../../lib/auth.ts";
 import { badRequest, json } from "../../../../../lib/http.ts";
 import { buildSeatProgress } from "../../../../../lib/dashboard.ts";
 import { listGroupMembers, upsertSeats } from "../../../../../lib/group_repo.ts";
@@ -13,6 +14,9 @@ type SeatInput = {
 
 export const handler = define.handlers({
   async GET(ctx) {
+    const authError = requireTeacher(ctx.state);
+    if (authError) return authError;
+
     const url = new URL(ctx.req.url);
     const problemId = url.searchParams.get("problemId")?.trim();
 
@@ -25,6 +29,9 @@ export const handler = define.handlers({
   },
 
   async PUT(ctx) {
+    const authError = requireTeacher(ctx.state);
+    if (authError) return authError;
+
     const body = await ctx.req.json().catch(() => null) as { seats?: SeatInput[] } | null;
     const seats = body?.seats;
 

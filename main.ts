@@ -1,6 +1,7 @@
 import { App, staticFiles } from "fresh";
 import { define, type State } from "./utils.ts";
 import { getConfig, shouldLog } from "./lib/config.ts";
+import { resolveAuth } from "./lib/auth.ts";
 
 export const app = new App<State>();
 const config = getConfig();
@@ -24,6 +25,7 @@ app.use((ctx) => {
 // Pass a shared value from a middleware
 app.use(async (ctx) => {
   ctx.state.shared = "hello";
+  ctx.state.auth = resolveAuth(ctx.req);
   const res = await ctx.next();
   res.headers.set("access-control-allow-origin", config.corsOrigin);
   return res;

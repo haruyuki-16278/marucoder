@@ -1,10 +1,14 @@
 import { define } from "../../../../../utils.ts";
+import { requireTeacher } from "../../../../../lib/auth.ts";
 import { badRequest, json } from "../../../../../lib/http.ts";
 import { getGroup, listGroupMembers, upsertSeats } from "../../../../../lib/group_repo.ts";
 import { buildSeatImportResult } from "../../../../../lib/seat_import.ts";
 
 export const handler = define.handlers({
   async POST(ctx) {
+    const authError = requireTeacher(ctx.state);
+    if (authError) return authError;
+
     const groupId = ctx.params.groupId;
     const group = await getGroup(groupId);
     if (!group) {

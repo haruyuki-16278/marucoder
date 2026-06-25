@@ -1,10 +1,14 @@
 import { define } from "../../../../utils.ts";
+import { requireTeacher } from "../../../../lib/auth.ts";
 import { badRequest, json, notFound } from "../../../../lib/http.ts";
 import { getGroup, listGroupMembers, listSeats, type SeatInput, upsertSeats } from "../../../../lib/group_repo.ts";
 import { validateSeatInputs } from "../../../../lib/seat_validation.ts";
 
 export const handler = define.handlers({
   async GET(ctx) {
+    const authError = requireTeacher(ctx.state);
+    if (authError) return authError;
+
     const group = await getGroup(ctx.params.groupId);
     if (!group) {
       return notFound("GROUP_NOT_FOUND", "group was not found");
@@ -15,6 +19,9 @@ export const handler = define.handlers({
   },
 
   async PUT(ctx) {
+    const authError = requireTeacher(ctx.state);
+    if (authError) return authError;
+
     const group = await getGroup(ctx.params.groupId);
     if (!group) {
       return notFound("GROUP_NOT_FOUND", "group was not found");

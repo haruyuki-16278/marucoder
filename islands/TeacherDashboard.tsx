@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import type { ProgressSnapshot, SeatProgress } from "../lib/models.ts";
+import type { Problem, ProgressSnapshot, SeatProgress } from "../lib/models.ts";
 
 type Props = {
   initialProblemId: string;
@@ -12,6 +12,7 @@ type ImportError = {
 
 export default function TeacherDashboard({ initialProblemId }: Props) {
   const [problemId, setProblemId] = useState(initialProblemId || "A-01");
+  const [problems, setProblems] = useState<Problem[]>([]);
   const [snapshots, setSnapshots] = useState<ProgressSnapshot[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [seats, setSeats] = useState<SeatProgress[]>([]);
@@ -47,6 +48,19 @@ export default function TeacherDashboard({ initialProblemId }: Props) {
     if (!exists) setSelectedGroupId(data[0].groupId);
   }
 
+  async function loadProblems() {
+    const res = await fetch("/api/problems");
+    if (!res.ok) throw new Error(`problem fetch failed: ${res.status}`);
+    const data = await res.json() as Problem[];
+    setProblems(data);
+
+    if (data.length === 0) return;
+    const exists = data.some((problem) => problem.id === problemId);
+    if (!exists) {
+      setProblemId(data[0].id);
+    }
+  }
+
   async function loadSeats(groupId: string, targetProblemId: string) {
     if (!groupId) {
       setSeats([]);
@@ -63,6 +77,7 @@ export default function TeacherDashboard({ initialProblemId }: Props) {
   }
 
   async function reloadAll() {
+    if (!problemId) return;
     setLoading(true);
     setError("");
 
@@ -81,6 +96,13 @@ export default function TeacherDashboard({ initialProblemId }: Props) {
   }
 
   useEffect(() => {
+    loadProblems().catch((e) => {
+      setError(e instanceof Error ? e.message : "unknown error");
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!problemId) return;
     reloadAll();
     const timer = setInterval(() => {
       reloadAll();
@@ -158,11 +180,18 @@ export default function TeacherDashboard({ initialProblemId }: Props) {
       <div class="mb-4 flex flex-wrap items-center gap-3">
         <h1 class="text-xl font-bold">教卓進捗ダッシュボード</h1>
         <label class="text-sm">課題ID:</label>
-        <input
+        <select
           class="rounded border border-slate-300 px-2 py-1 text-sm"
           value={problemId}
-          onInput={(e) => setProblemId((e.target as HTMLInputElement).value)}
-        />
+          onChange={(e) => setProblemId((e.target as HTMLSelectElement).value)}
+        >
+          {problems.length === 0 && <option value="">問題なし</option>}
+          {problems.map((problem) => (
+            <option key={problem.id} value={problem.id}>
+              {problem.title} ({problem.id})
+            </option>
+          ))}
+        </select>
         <button class="rounded bg-slate-900 px-3 py-1 text-sm text-white" onClick={reloadAll}>再取得</button>
         <span class="text-sm text-slate-600">最終更新: {updatedAt || "-"}</span>
         {loading && <span class="text-sm text-slate-500">更新中...</span>}

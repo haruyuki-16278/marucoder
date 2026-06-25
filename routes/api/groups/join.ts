@@ -1,9 +1,13 @@
 import { define } from "../../../utils.ts";
+import { requireStudent } from "../../../lib/auth.ts";
 import { badRequest, getUserId, json, notFound } from "../../../lib/http.ts";
 import { addStudentToGroup, getGroupByJoinCode } from "../../../lib/group_repo.ts";
 
 export const handler = define.handlers({
   async POST(ctx) {
+    const authError = requireStudent(ctx.state);
+    if (authError) return authError;
+
     const body = await ctx.req.json().catch(() => null) as {
       joinCode?: string;
       displayName?: string;
