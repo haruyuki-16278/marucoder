@@ -11,8 +11,8 @@
 - APP_USER: marucoder
 - APP_DIR: /opt/marucoder
 - APP_PORT: 8000
-- DOMAIN: example.com
-- EMAIL: admin@example.com
+- DOMAIN: marucoder.relicsnow.net
+- EMAIL: yamaji.toshiyuki@kamiyama.ac.jp
 
 ## 1. ランタイム導入
 
@@ -74,7 +74,7 @@ deno install
 ```bash
 sudo tee /etc/marucoder.env >/dev/null <<EOF
 PORT=8000
-CORS_ORIGIN=https://example.com
+CORS_ORIGIN=https://marucoder.relicsnow.net
 LOG_LEVEL=info
 EOF
 sudo chmod 640 /etc/marucoder.env
@@ -96,7 +96,7 @@ Type=simple
 User=marucoder
 WorkingDirectory=/opt/marucoder
 EnvironmentFile=/etc/marucoder.env
-ExecStart=/home/marucoder/.deno/bin/deno run -A --unstable-kv npm:vite --host 127.0.0.1 --port ${PORT}
+ExecStart=/home/marucoder/.deno/bin/deno run -A --unstable-kv npm:vite --host 127.0.0.1 --port 80
 Restart=always
 RestartSec=3
 
@@ -127,10 +127,10 @@ sudo systemctl start nginx
 ### 5.2 サイト設定
 
 ```bash
-sudo tee /etc/nginx/sites-available/marucoder.conf >/dev/null <<EOF
+sudo tee /etc/nginx/sites-available/marucoder.conf >/dev/null <<'EOF'
 server {
     listen 80;
-    server_name example.com;
+    server_name marucoder.relicsnow.net;
 
     location / {
         proxy_pass http://127.0.0.1:8000;
@@ -152,16 +152,16 @@ sudo systemctl reload nginx
 
 ```bash
 sudo apt -y install certbot python3-certbot-nginx
-sudo certbot --nginx -d example.com -m admin@example.com --agree-tos --redirect --non-interactive
+sudo certbot --nginx -d marucoder.relicsnow.net -m yamaji.toshiyuki@kamiyama.ac.jp --agree-tos --redirect --non-interactive
 sudo certbot renew --dry-run
 ```
 
 ## 7. 動作確認
 
 ```bash
-curl -I http://example.com
-curl -I https://example.com
-curl -s 'https://example.com/api/dashboard/groups?problemId=A-01'
+curl -I http://marucoder.relicsnow.net
+curl -I https://marucoder.relicsnow.net
+curl -s 'https://marucoder.relicsnow.net/api/dashboard/groups?problemId=A-01'
 ```
 
 確認ポイント:
