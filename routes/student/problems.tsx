@@ -28,11 +28,14 @@ export default define.page(async function StudentProblemsPage() {
           : problems.map((problem) => (
             <article key={problem.id} class="rounded border border-slate-200 bg-white p-4">
               <div class="flex items-center justify-between gap-2">
-                <h2 class="text-lg font-semibold">{problem.title}</h2>
+                <h2 class="text-lg font-semibold">
+                  <a href={`/student/problems/${problem.id}`} class="hover:underline">{problem.title}</a>
+                </h2>
                 <span class="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">公開中</span>
               </div>
-              <p class="mt-2 whitespace-pre-wrap text-sm text-slate-700">{problem.statement}</p>
-              <p class="mt-2 text-xs text-slate-500">ID: {problem.id}</p>
+              <p class="mt-2 line-clamp-3 whitespace-pre-wrap text-sm text-slate-700">{problem.statement}</p>
+              <a href={`/student/problems/${problem.id}`}
+                class="mt-2 inline-block text-xs text-sky-700 hover:underline">問題を解く →</a>
             </article>
           ))}
       </div>

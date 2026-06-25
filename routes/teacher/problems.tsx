@@ -100,25 +100,17 @@ export default define.page(async function TeacherProblemsPage() {
         {problems.length === 0
           ? <p class="rounded border border-slate-200 bg-white p-4 text-slate-500">問題はまだありません。</p>
           : problems.map((problem) => (
-            <article key={problem.id} class="rounded border border-slate-200 bg-white p-4">
-              <div class="flex flex-wrap items-center gap-2">
-                <h2 class="text-lg font-semibold">{problem.title}</h2>
-                <span class="rounded px-2 py-0.5 text-xs bg-slate-100 text-slate-700">{problem.status}</span>
-                <span class="text-xs text-slate-500">ID: {problem.id}</span>
+            <article key={problem.id} class="flex flex-wrap items-center gap-3 rounded border border-slate-200 bg-white p-4">
+              <div class="min-w-0 flex-1">
+                <a href={`/teacher/problems/${problem.id}`} class="text-lg font-semibold hover:underline">{problem.title}</a>
+                <div class="mt-1 flex flex-wrap gap-2">
+                  <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{problem.status}</span>
+                  <span class="text-xs text-slate-500">ID: {problem.id}</span>
+                </div>
               </div>
-
-              <form method="post" class="mt-3 space-y-2">
-                <input type="hidden" name="action" value="update" />
-                <input type="hidden" name="problemId" value={problem.id} />
-                <input name="title" value={problem.title} class="w-full rounded border border-slate-300 px-2 py-1 text-sm" />
-                <textarea name="statement" class="h-24 w-full rounded border border-slate-300 px-2 py-1 text-sm">{problem.statement}</textarea>
-                <textarea name="inputSpec" class="h-16 w-full rounded border border-slate-300 px-2 py-1 text-sm">{problem.inputSpec}</textarea>
-                <textarea name="outputSpec" class="h-16 w-full rounded border border-slate-300 px-2 py-1 text-sm">{problem.outputSpec}</textarea>
-                <textarea name="constraints" class="h-16 w-full rounded border border-slate-300 px-2 py-1 text-sm">{problem.constraints}</textarea>
-                <button type="submit" class="rounded border border-slate-300 px-3 py-1 text-sm">更新</button>
-              </form>
-
-              <div class="mt-2 flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-2">
+                <a href={`/teacher/problems/${problem.id}`}
+                  class="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50">編集・テストケース</a>
                 {problem.status !== "published"
                   ? (
                     <form method="post">
@@ -131,14 +123,9 @@ export default define.page(async function TeacherProblemsPage() {
                     <form method="post">
                       <input type="hidden" name="action" value="unpublish" />
                       <input type="hidden" name="problemId" value={problem.id} />
-                      <button type="submit" class="rounded bg-amber-700 px-3 py-1 text-sm text-white">下書きに戻す</button>
+                      <button type="submit" class="rounded bg-amber-600 px-3 py-1 text-sm text-white">下書きへ</button>
                     </form>
                   )}
-                <form method="post">
-                  <input type="hidden" name="action" value="archive" />
-                  <input type="hidden" name="problemId" value={problem.id} />
-                  <button type="submit" class="rounded bg-rose-700 px-3 py-1 text-sm text-white">アーカイブ</button>
-                </form>
               </div>
             </article>
           ))}

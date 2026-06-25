@@ -1,5 +1,5 @@
 import { getKV } from "./kv.ts";
-import type { ClassroomSeat, Group, GroupMember, Problem, Submission } from "./models.ts";
+import type { CaseResult, ClassroomSeat, Group, GroupMember, Problem, ProblemSample, Submission, TestCase } from "./models.ts";
 
 export type SeatInput = {
   row: number;
@@ -116,6 +116,7 @@ export async function createProblem(input: {
   inputSpec?: string;
   outputSpec?: string;
   constraints?: string;
+  samples?: ProblemSample[];
   authorUserId: string;
 }): Promise<Problem> {
   const kv = await getKV();
@@ -128,6 +129,7 @@ export async function createProblem(input: {
     inputSpec: input.inputSpec ?? "",
     outputSpec: input.outputSpec ?? "",
     constraints: input.constraints ?? "",
+    samples: input.samples ?? [],
     status: "draft",
     authorUserId: input.authorUserId,
     createdAt: now,
@@ -168,6 +170,7 @@ export async function updateProblem(problemId: string, patch: {
   inputSpec?: string;
   outputSpec?: string;
   constraints?: string;
+  samples?: ProblemSample[];
 }): Promise<Problem | null> {
   const kv = await getKV();
   const current = await getProblem(problemId);
@@ -180,6 +183,7 @@ export async function updateProblem(problemId: string, patch: {
     inputSpec: patch.inputSpec ?? current.inputSpec,
     outputSpec: patch.outputSpec ?? current.outputSpec,
     constraints: patch.constraints ?? current.constraints,
+    samples: patch.samples ?? current.samples,
     updatedAt: new Date().toISOString(),
   };
 
@@ -216,6 +220,111 @@ export async function archiveProblem(problemId: string): Promise<Problem | null>
 
   await kv.set(["problems", problemId], next);
   return next;
+}
+
+// ─── TestCase ──────────────────────────────────────────────────────────────
+
+export async function createTestCase(input: {
+  problemId: string;
+  input: string;
+  expectedOutput: string;
+  isPublic?: boolean;
+  order?: number;
+}): Promise<TestCase> {
+  const kv = await getKV();
+  const tc: TestCase = {
+    id: newId("tc"),
+    problemId: input.problemId,
+    input: input.input,
+    expectedOutput: input.expectedOutput,
+    isPublic: input.isPublic ?? false,
+    order: input.order ?? 0,
+  };
+  await kv.set(["test_cases", input.problemId, tc.id], tc);
+  return tc;
+}
+
+export async function listTestCases(problemId: string): Promise<TestCase[]> {
+  const kv = await getKV();
+  const tcs: TestCase[] = [];
+  for await (const entry of kv.list<TestCase>({ prefix: ["test_cases", problemId] })) {
+    tcs.push(entry.value);
+  }
+  return tcs.sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+}
+
+export async function getTestCase(problemId: string, testCaseId: string): Promise<TestCase | null> {
+  const kv = await getKV();
+  const result = await kv.get<TestCase>(["test_cases", problemId, testCaseId]);
+  return result.value;
+}
+
+export async function updateTestCase(problemId: string, testCaseId: string, patch: {
+  input?: string;
+  expectedOutput?: string;
+  isPublic?: boolean;
+  order?: number;
+}): Promise<TestCase | null> {
+  const current = await getTestCase(problemId, testCaseId);
+  if (!current) return null;
+  const kv = await getKV();
+  const next: TestCase = {
+    ...current,
+    input: patch.input ?? current.input,
+    expectedOutput: patch.expectedOutput ?? current.expectedOutput,
+    isPublic: patch.isPublic ?? current.isPublic,
+    order: patch.order ?? current.order,
+  };
+  await kv.set(["test_cases", problemId, testCaseId], next);
+  return next;
+}
+
+export async function deleteTestCase(problemId: string, testCaseId: string): Promise<boolean> {
+  const kv = await getKV();
+  const existing = await getTestCase(problemId, testCaseId);
+  if (!existing) return false;
+  await kv.delete(["test_cases", problemId, testCaseId]);
+  return true;
+}
+
+// ─── CaseResult ────────────────────────────────────────────────────────────
+
+export async function saveCaseResult(result: Omit<CaseResult, "id">): Promise<CaseResult> {
+  const kv = await getKV();
+  const cr: CaseResult = { id: newId("cr"), ...result };
+  await kv.set(["case_results", result.submissionId, cr.id], cr);
+  return cr;
+}
+
+export async function listCaseResults(submissionId: string): Promise<CaseResult[]> {
+  const kv = await getKV();
+  const results: CaseResult[] = [];
+  for await (const entry of kv.list<CaseResult>({ prefix: ["case_results", submissionId] })) {
+    results.push(entry.value);
+  }
+  return results.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export async function updateSubmissionStatus(
+  submissionId: string,
+  patch: {
+    status: Submission["status"];
+    verdict?: Submission["verdict"];
+    compileOutput?: string;
+    finishedAt?: string;
+  },
+): Promise<void> {
+  const kv = await getKV();
+  const result = await kv.get<Submission>(["submissions", submissionId]);
+  if (!result.value) return;
+  const next: Submission = {
+    ...result.value,
+    status: patch.status,
+    verdict: patch.verdict !== undefined ? patch.verdict : result.value.verdict,
+    compileOutput: patch.compileOutput ?? result.value.compileOutput,
+    finishedAt: patch.finishedAt ?? result.value.finishedAt,
+  };
+  await kv.set(["submissions", submissionId], next);
 }
 
 export async function upsertSeats(groupId: string, seats: SeatInput[]): Promise<number> {

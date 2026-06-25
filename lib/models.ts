@@ -2,6 +2,11 @@ export type Role = "teacher" | "student";
 export type Verdict = "AC" | "WA" | "TLE" | "RE" | "CE" | "IE";
 export type ProblemStatus = "draft" | "published" | "archived";
 
+export interface ProblemSample {
+  input: string;
+  output: string;
+}
+
 export interface Problem {
   id: string;
   title: string;
@@ -9,11 +14,32 @@ export interface Problem {
   inputSpec: string;
   outputSpec: string;
   constraints: string;
+  samples: ProblemSample[];
   status: ProblemStatus;
   authorUserId: string;
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+}
+
+export interface TestCase {
+  id: string;
+  problemId: string;
+  input: string;
+  expectedOutput: string;
+  isPublic: boolean;
+  order: number;
+}
+
+export interface CaseResult {
+  id: string;
+  submissionId: string;
+  testCaseId: string;
+  verdict: "AC" | "WA" | "TLE" | "RE";
+  exitCode: number;
+  timeMs: number;
+  stdout: string;
+  stderr: string;
 }
 
 export interface Group {
