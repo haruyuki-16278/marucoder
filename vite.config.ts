@@ -4,5 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [fresh(), tailwindcss()],
-  allowedHosts: ["localhost", "marucoder.relicsnow.net"]
+  server: {
+    allowedHosts: true
+  }
 });
