@@ -1,15 +1,6 @@
 import { Head } from "fresh/runtime";
 import { define } from "../utils.ts";
-import { requireAuth } from "../lib/auth.ts";
 import { listProblems, listSubmissions } from "../lib/group_repo.ts";
-
-export const handler = define.handlers({
-  GET(ctx) {
-    const authError = requireAuth(ctx.state);
-    if (authError) return authError;
-    return ctx.render(null);
-  },
-});
 
 export default define.page(async function SubmissionsPage(ctx) {
   const url = new URL(ctx.req.url);

@@ -1,5 +1,8 @@
 {
   "nodeModulesDir": "manual",
+  "unstable": [
+    "kv"
+  ],
   "tasks": {
     "check": "deno fmt --check . && deno lint . && deno check",
     "dev": "vite",

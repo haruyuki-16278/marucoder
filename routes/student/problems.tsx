@@ -1,15 +1,6 @@
 import { Head } from "fresh/runtime";
 import { define } from "../../utils.ts";
-import { requireStudent } from "../../lib/auth.ts";
 import { listProblems } from "../../lib/group_repo.ts";
-
-export const handler = define.handlers({
-  GET(ctx) {
-    const authError = requireStudent(ctx.state);
-    if (authError) return authError;
-    return ctx.render(null);
-  },
-});
 
 export default define.page(async function StudentProblemsPage() {
   const problems = await listProblems({ onlyPublished: true });

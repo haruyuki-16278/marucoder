@@ -1,14 +1,5 @@
 import { Head } from "fresh/runtime";
 import { define } from "../../utils.ts";
-import { requireTeacher } from "../../lib/auth.ts";
-
-export const handler = define.handlers({
-  GET(ctx) {
-    const authError = requireTeacher(ctx.state);
-    if (authError) return authError;
-    return ctx.render(null);
-  },
-});
 
 export default define.page(function TeacherHome() {
   return (

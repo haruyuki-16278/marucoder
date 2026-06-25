@@ -5,12 +5,6 @@ import { archiveProblem, createProblem, listProblems, setProblemPublished, updat
 import { badRequest } from "../../lib/http.ts";
 
 export const handler = define.handlers({
-  async GET(ctx) {
-    const authError = requireTeacher(ctx.state);
-    if (authError) return authError;
-    return ctx.render(null);
-  },
-
   async POST(ctx) {
     const authError = requireTeacher(ctx.state);
     if (authError) return authError;

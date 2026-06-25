@@ -14,14 +14,6 @@ import {
 import { badRequest, notFound } from "../../../lib/http.ts";
 
 export const handler = define.handlers({
-  async GET(ctx) {
-    const authError = requireTeacher(ctx.state);
-    if (authError) return authError;
-    const problem = await getProblem(ctx.params.problemId);
-    if (!problem) return notFound("PROBLEM_NOT_FOUND", "problem was not found");
-    return ctx.render(null);
-  },
-
   async POST(ctx) {
     const authError = requireTeacher(ctx.state);
     if (authError) return authError;
