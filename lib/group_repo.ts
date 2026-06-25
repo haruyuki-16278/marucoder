@@ -19,6 +19,7 @@ function makeJoinCode(): string {
 export async function createGroup(input: {
   name: string;
   teacherUserId: string;
+  teacherDisplayName?: string;
   startsAt?: string;
   endsAt?: string;
 }): Promise<Group> {
@@ -42,7 +43,7 @@ export async function createGroup(input: {
     groupId: group.id,
     userId: input.teacherUserId,
     role: "teacher",
-    displayName: input.teacherUserId,
+    displayName: input.teacherDisplayName?.trim() || input.teacherUserId,
     joinedAt: new Date().toISOString(),
   };
   await kv.set(["group_members", group.id, input.teacherUserId], teacherMember);
@@ -90,6 +91,30 @@ export async function addStudentToGroup(params: {
   };
   await kv.set(["group_members", params.groupId, params.userId], member);
   return member;
+}
+
+// 複数の学生を一括登録する（CSV一括インポート用）
+export async function addStudentsToGroup(
+  groupId: string,
+  students: Array<{ userId: string; displayName?: string }>,
+): Promise<GroupMember[]> {
+  const kv = await getKV();
+  const members: GroupMember[] = [];
+
+  for (const student of students) {
+    const member: GroupMember = {
+      id: newId("member"),
+      groupId,
+      userId: student.userId,
+      role: "student",
+      displayName: student.displayName ?? student.userId,
+      joinedAt: new Date().toISOString(),
+    };
+    members.push(member);
+    await kv.set(["group_members", groupId, student.userId], member);
+  }
+
+  return members;
 }
 
 export async function listGroupMembers(groupId: string): Promise<GroupMember[]> {

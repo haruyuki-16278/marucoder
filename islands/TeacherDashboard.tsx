@@ -24,6 +24,12 @@ export default function TeacherDashboard({ initialProblemId }: Props) {
   const [formUserId, setFormUserId] = useState("");
   const [formLabel, setFormLabel] = useState("");
   const [csvText, setCsvText] = useState("groupId,row,col,userId,studentName,label\n");
+  // グループ作成フォーム用
+  const [formGroupName, setFormGroupName] = useState("");
+  const [formTeacherDisplayName, setFormTeacherDisplayName] = useState("");
+  // 学生CSV一括登録用
+  const [formStudentCsv, setFormStudentCsv] = useState("userId,displayName\n");
+  const [formStudentCsvErrors, setFormStudentCsvErrors] = useState<string[]>([]);
   const [actionMessage, setActionMessage] = useState("");
   const [importErrors, setImportErrors] = useState<ImportError[]>([]);
 
@@ -146,6 +152,103 @@ export default function TeacherDashboard({ initialProblemId }: Props) {
 
     setActionMessage(`更新成功: ${data.updatedCount} 件`);
     await loadSeats(selectedGroupId, problemId);
+  }
+
+  async function submitCreateGroup(e: Event) {
+    e.preventDefault();
+    const name = formGroupName.trim();
+    if (!name) {
+      setActionMessage("グループ名は空にできません");
+      return;
+    }
+
+    setActionMessage("グループ作成中...");
+    const res = await fetch("/api/groups", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name,
+        teacherDisplayName: formTeacherDisplayName.trim() || undefined,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      setActionMessage(`グループ作成失敗: ${data.message ?? data.code ?? "unknown"}`);
+      return;
+    }
+
+    setActionMessage(`グループ作成成功: ${data.groupId} (joinCode: ${data.joinCode})`);
+    setFormGroupName("");
+    setFormTeacherDisplayName("");
+    await loadSnapshots(problemId);
+  }
+
+  async function submitAddStudents(e: Event) {
+    e.preventDefault();
+    if (!selectedGroupId) {
+      setActionMessage("グループを選択してください");
+      return;
+    }
+
+    const lines = formStudentCsv.trim().split("\n").filter((line) => line.trim());
+    if (lines.length === 0 || (lines.length === 1 && lines[0].toLowerCase() === "userid,displayname")) {
+      setActionMessage("学生データを入力してください");
+      return;
+    }
+
+    // ヘッダーをスキップ
+    const headerLine = lines[0].toLowerCase();
+    const dataLines = headerLine === "userid,displayname" ? lines.slice(1) : lines;
+
+    const students: Array<{ userId: string; displayName?: string }> = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < dataLines.length; i++) {
+      const line = dataLines[i].trim();
+      if (!line) continue;
+
+      const parts = line.split(",").map((p) => p.trim());
+      const userId = parts[0];
+      const displayName = parts[1];
+
+      if (!userId) {
+        errors.push(`行${i + 2}: userIdが空です`);
+        continue;
+      }
+
+      students.push({ userId, displayName });
+    }
+
+    if (errors.length > 0) {
+      setFormStudentCsvErrors(errors);
+      setActionMessage(`学生追加失敗: バリデーションエラー ${errors.length} 件`);
+      return;
+    }
+
+    if (students.length === 0) {
+      setActionMessage("学生データを入力してください");
+      return;
+    }
+
+    setActionMessage("学生追加中...");
+    setFormStudentCsvErrors([]);
+
+    const res = await fetch(`/api/groups/${encodeURIComponent(selectedGroupId)}/students`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ students }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      setActionMessage(`学生追加失敗: ${data.message ?? data.code ?? "unknown"}`);
+      return;
+    }
+
+    setActionMessage(`学生追加成功: ${data.addedCount} 件`);
+    setFormStudentCsv("userId,displayName\n");
+    await loadSnapshots(problemId);
   }
 
   async function submitCsvImport(e: Event) {
@@ -283,6 +386,55 @@ export default function TeacherDashboard({ initialProblemId }: Props) {
             )}
         </section>
       </div>
+
+      <section class="mt-4 rounded border border-slate-200 bg-white p-3">
+        <h2 class="mb-2 font-semibold">グループ・名簿管理</h2>
+        <div class="grid gap-4 md:grid-cols-3">
+          <form class="space-y-2 rounded border border-amber-200 bg-amber-50 p-3" onSubmit={submitCreateGroup}>
+            <p class="text-sm font-medium">グループ作成</p>
+            <input
+              class="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+              value={formGroupName}
+              onInput={(e) => setFormGroupName((e.target as HTMLInputElement).value)}
+              placeholder="グループ名 (例: 1年A組)"
+            />
+            <input
+              class="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+              value={formTeacherDisplayName}
+              onInput={(e) => setFormTeacherDisplayName((e.target as HTMLInputElement).value)}
+              placeholder="教員表示名 (省略可)"
+            />
+            <button class="w-full rounded bg-amber-600 px-3 py-1 text-sm text-white" type="submit">作成</button>
+          </form>
+
+          <form class="space-y-2 rounded border border-green-200 bg-green-50 p-3" onSubmit={submitAddStudents}>
+            <p class="text-sm font-medium">学生一括登録</p>
+            <textarea
+              class="h-24 w-full rounded border border-slate-300 px-2 py-1 font-mono text-xs"
+              value={formStudentCsv}
+              onInput={(e) => setFormStudentCsv((e.target as HTMLTextAreaElement).value)}
+              placeholder="userId,displayName&#10;s001,山田太郎&#10;s002,佐藤花子"
+            />
+            <button class="w-full rounded bg-green-600 px-3 py-1 text-sm text-white" type="submit" disabled={!selectedGroupId}>
+              登録
+            </button>
+          </form>
+        </div>
+
+        {actionMessage && (
+          <p class="mt-3 rounded bg-sky-50 p-2 text-sm text-slate-700">{actionMessage}</p>
+        )}
+        {formStudentCsvErrors.length > 0 && (
+          <div class="mt-2 rounded border border-rose-300 bg-rose-50 p-2">
+            <p class="mb-1 text-xs font-semibold text-rose-700">CSV入力エラー</p>
+            <ul class="list-disc pl-5 text-xs text-rose-600">
+              {formStudentCsvErrors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
 
       <section class="mt-4 rounded border border-slate-200 bg-white p-3">
         <h2 class="mb-2 font-semibold">席順編集</h2>

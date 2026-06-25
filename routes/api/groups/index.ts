@@ -10,6 +10,7 @@ export const handler = define.handlers({
 
     const body = await ctx.req.json().catch(() => null) as {
       name?: string;
+      teacherDisplayName?: string;
       startsAt?: string;
       endsAt?: string;
     } | null;
@@ -22,6 +23,7 @@ export const handler = define.handlers({
     const group = await createGroup({
       name: body.name.trim(),
       teacherUserId,
+      teacherDisplayName: body.teacherDisplayName?.trim(),
       startsAt: body.startsAt,
       endsAt: body.endsAt,
     });
