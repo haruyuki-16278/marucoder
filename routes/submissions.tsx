@@ -20,7 +20,7 @@ export default define.page(async function SubmissionsPage(ctx) {
       </Head>
       <h1 class="mb-2 text-xl font-bold">提出履歴</h1>
       <p class="mb-4 text-sm text-slate-600">
-        フィルタ: userId={userId ?? "-"}, problemId={problemId ?? "-"}, verdict={verdict ?? "-"}
+        フィルタ: 出席番号={userId ?? "-"}, problemId={problemId ?? "-"}, verdict={verdict ?? "-"}
       </p>
 
       <div class="overflow-auto rounded border border-slate-200 bg-white">
@@ -28,7 +28,7 @@ export default define.page(async function SubmissionsPage(ctx) {
           <thead>
             <tr class="border-b border-slate-200 bg-slate-50 text-left">
               <th class="px-3 py-2">ID</th>
-              <th class="px-3 py-2">ユーザー</th>
+              <th class="px-3 py-2">出席番号</th>
               <th class="px-3 py-2">問題</th>
               <th class="px-3 py-2">判定</th>
               <th class="px-3 py-2">提出時刻</th>

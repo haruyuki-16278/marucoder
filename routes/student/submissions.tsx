@@ -11,7 +11,7 @@ export default define.page(async function StudentSubmissionsPage(ctx) {
         <title>自分の提出 | marucoder</title>
       </Head>
       <h1 class="text-2xl font-bold">自分の提出</h1>
-      <p class="mt-2 text-sm text-slate-600">ユーザー: {ctx.state.auth.userId}</p>
+      <p class="mt-2 text-sm text-slate-600">出席番号: {ctx.state.auth.userId}</p>
 
       <div class="mt-4 overflow-auto rounded border border-slate-200 bg-white">
         <table class="w-full text-sm">

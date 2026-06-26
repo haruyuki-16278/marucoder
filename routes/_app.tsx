@@ -31,7 +31,9 @@ export default define.page(function App(ctx) {
                   <a href="/student/submissions" class="font-semibold text-slate-700 hover:text-slate-900">自分の提出</a>
                 </>
               )}
-            <span class="ml-auto text-xs text-slate-500">{role}:{userId}</span>
+            <span class="ml-auto text-xs text-slate-500">
+              {role === "student" ? `出席番号: ${userId}` : `${role}: ${userId}`}
+            </span>
           </nav>
         </header>
         <ctx.Component />

@@ -28,7 +28,7 @@ export default define.page(async function Home(ctx) {
         <section class="rounded border border-slate-200 bg-white p-6">
           <h1 class="text-3xl font-bold text-slate-900">marucoder ホーム</h1>
           <p class="mt-2 text-slate-600">
-            現在のセッション: {role} / {userId}
+            現在のセッション: {role} / {role === "student" ? `出席番号 ${userId}` : userId}
           </p>
         </section>
 
@@ -62,7 +62,9 @@ export default define.page(async function Home(ctx) {
             >
               {studentOptions.map((u) => (
                 <option key={u.userId} value={u.userId} selected={u.userId === studentSelected}>
-                  {u.displayName === u.userId ? u.displayName : `${u.displayName}（${u.userId}）`}
+                  {u.displayName === u.userId
+                    ? `出席番号: ${u.userId}`
+                    : `${u.displayName}（出席番号: ${u.userId}）`}
                 </option>
               ))}
             </select>
