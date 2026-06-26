@@ -121,7 +121,21 @@ SSH設定変更で接続不能になった場合、VPSコンソールから root
 sudo cp /etc/ssh/sshd_config.bak.<timestamp> /etc/ssh/sshd_config
 sudo systemctl restart ssh
 ```
-
 ## 8. 次ステップ
 
 次は 19.9.2 (Indigo デプロイ手順確立) を実施する。
+
+## 9. 管理者認証の初期設定 (必須)
+
+アプリ起動前に `ADMIN_PASSWORD` を必ず設定する。
+
+```bash
+sudo -u marucoder tee /opt/marucoder/.env >/dev/null << 'EOF'
+ADMIN_PASSWORD=<十分に強い管理者パスワード>
+EOF
+sudo chmod 600 /opt/marucoder/.env
+```
+
+確認ポイント:
+1. `ADMIN_PASSWORD` が未設定だとアプリは起動時にエラー停止する
+2. `.env` の権限は `600` であること

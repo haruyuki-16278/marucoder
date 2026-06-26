@@ -1,6 +1,6 @@
 import { define } from "../../../utils.ts";
 import { requireStudent } from "../../../lib/auth.ts";
-import { badRequest, getUserId, json, notFound } from "../../../lib/http.ts";
+import { badRequest, json, notFound } from "../../../lib/http.ts";
 import { addStudentToGroup, getGroupByJoinCode } from "../../../lib/group_repo.ts";
 
 export const handler = define.handlers({
@@ -23,7 +23,7 @@ export const handler = define.handlers({
       return notFound("GROUP_NOT_FOUND", "group was not found by joinCode");
     }
 
-    const userId = getUserId(ctx.req);
+    const userId = ctx.state.auth.userId;
     const member = await addStudentToGroup({
       groupId: group.id,
       userId,

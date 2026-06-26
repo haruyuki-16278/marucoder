@@ -1,11 +1,10 @@
 import { assertEquals } from "@std/assert";
-import { resolveAuth } from "./auth.ts";
+import { resolveAuth, requireAdmin, requireAdminOrTeacher, requireStudent, requireTeacher } from "./auth.ts";
 
-Deno.test("auth: resolve role and user from headers", () => {
+Deno.test("auth: resolve from cookies", () => {
   const req = new Request("http://localhost:8000/", {
     headers: {
-      "x-user-id": "s001",
-      "x-user-role": "student",
+      cookie: "mc_user_id=s001; mc_role=student; mc_must_change_password=1",
     },
   });
 
@@ -13,13 +12,38 @@ Deno.test("auth: resolve role and user from headers", () => {
   assertEquals(auth.userId, "s001");
   assertEquals(auth.role, "student");
   assertEquals(auth.isAuthenticated, true);
+  assertEquals(auth.mustChangePassword, true);
 });
 
-Deno.test("auth: query role is accepted", () => {
-  const req = new Request("http://localhost:8000/?role=teacher&userId=t001");
-
+Deno.test("auth: no cookie means unauthenticated", () => {
+  const req = new Request("http://localhost:8000/");
   const auth = resolveAuth(req);
-  assertEquals(auth.userId, "t001");
-  assertEquals(auth.role, "teacher");
-  assertEquals(auth.isAuthenticated, true);
+  assertEquals(auth.isAuthenticated, false);
+});
+
+Deno.test("auth: unauthenticated when no session", () => {
+  const req = new Request("http://localhost:8000/");
+  const auth = resolveAuth(req);
+  assertEquals(auth.isAuthenticated, false);
+  assertEquals(auth.mustChangePassword, false);
+});
+
+Deno.test("authz: role guards", () => {
+  const adminState = { auth: { userId: "admin", role: "admin", isAuthenticated: true, mustChangePassword: false } } as any;
+  const teacherState = { auth: { userId: "t", role: "teacher", isAuthenticated: true, mustChangePassword: false } } as any;
+  const studentState = { auth: { userId: "s", role: "student", isAuthenticated: true, mustChangePassword: false } } as any;
+
+  assertEquals(requireAdmin(adminState), null);
+  assertEquals(requireAdmin(teacherState)?.status, 403);
+
+  assertEquals(requireTeacher(adminState), null);
+  assertEquals(requireTeacher(teacherState), null);
+  assertEquals(requireTeacher(studentState)?.status, 403);
+
+  assertEquals(requireStudent(studentState), null);
+  assertEquals(requireStudent(teacherState)?.status, 403);
+
+  assertEquals(requireAdminOrTeacher(adminState), null);
+  assertEquals(requireAdminOrTeacher(teacherState), null);
+  assertEquals(requireAdminOrTeacher(studentState)?.status, 403);
 });

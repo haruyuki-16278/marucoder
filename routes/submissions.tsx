@@ -7,7 +7,9 @@ export default define.page(async function SubmissionsPage(ctx) {
   const requestedUserId = url.searchParams.get("userId") ?? undefined;
   const problemId = url.searchParams.get("problemId") ?? undefined;
   const verdict = url.searchParams.get("verdict") ?? undefined;
-  const userId = ctx.state.auth.role === "teacher" ? requestedUserId : ctx.state.auth.userId;
+  const userId = (ctx.state.auth.role === "teacher" || ctx.state.auth.role === "admin")
+    ? requestedUserId
+    : ctx.state.auth.userId;
 
   const submissions = await listSubmissions({ userId, problemId, verdict });
   const problems = await listProblems({ includeArchived: true });

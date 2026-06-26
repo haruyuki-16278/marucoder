@@ -1,4 +1,4 @@
-export type Role = "teacher" | "student";
+export type Role = "admin" | "teacher" | "student";
 export type Verdict = "AC" | "WA" | "TLE" | "RE" | "CE" | "IE";
 export type ProblemStatus = "draft" | "published" | "archived";
 
@@ -107,4 +107,14 @@ export interface SeatProgress {
   latestVerdict: Verdict | "NONE";
   submissionCount: number;
   lastSubmittedAt: string | null;
+}
+
+export interface UserAccount {
+  username: string;
+  role: Role;
+  email: string | null;
+  passwordHash: string;
+  mustChangePassword: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

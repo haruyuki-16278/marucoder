@@ -23,6 +23,19 @@ export default define.page(function TeacherHome() {
           <p class="mt-1 text-sm text-slate-600">全体の提出履歴を確認します。</p>
         </a>
       </div>
+
+      <section class="mt-6 rounded border border-slate-200 bg-white p-4">
+        <h2 class="text-lg font-semibold">学生CSV一括登録</h2>
+        <p class="mt-1 text-xs text-slate-500">ヘッダ: grade,attendanceNo</p>
+        <form method="post" action="/api/users/import/students" class="mt-3">
+          <textarea
+            name="csv"
+            class="h-40 w-full rounded border border-slate-300 px-2 py-1 font-mono text-xs"
+            defaultValue="grade,attendanceNo\n1,3\n1,4"
+          />
+          <button type="submit" class="mt-3 rounded bg-slate-900 px-3 py-1 text-sm text-white">学生を登録</button>
+        </form>
+      </section>
     </div>
   );
 });

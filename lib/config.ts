@@ -4,6 +4,7 @@ export interface AppConfig {
   port: number;
   corsOrigin: string;
   logLevel: LogLevel;
+  adminPassword: string;
 }
 
 function parsePort(value: string | undefined, fallback: number): number {
@@ -21,10 +22,16 @@ function parseLogLevel(value: string | undefined): LogLevel {
 }
 
 export function getConfig(): AppConfig {
+  const adminPassword = Deno.env.get("ADMIN_PASSWORD")?.trim();
+  if (!adminPassword) {
+    throw new Error("ADMIN_PASSWORD is required. Set ADMIN_PASSWORD in environment before startup.");
+  }
+
   return {
     port: parsePort(Deno.env.get("PORT"), 8000),
     corsOrigin: Deno.env.get("CORS_ORIGIN") ?? "*",
     logLevel: parseLogLevel(Deno.env.get("LOG_LEVEL")),
+    adminPassword,
   };
 }
 

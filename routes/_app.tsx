@@ -15,7 +15,15 @@ export default define.page(function App(ctx) {
         <header class="border-b border-slate-200 bg-white">
           <nav class="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 text-sm">
             <a href="/" class="font-semibold text-slate-700 hover:text-slate-900">ホーム</a>
-            {role === "teacher"
+            {role === "admin"
+              ? (
+                <>
+                  <a href="/admin" class="font-semibold text-slate-700 hover:text-slate-900">管理画面</a>
+                  <a href="/teacher/dashboard" class="font-semibold text-slate-700 hover:text-slate-900">教卓進捗</a>
+                  <a href="/submissions" class="font-semibold text-slate-700 hover:text-slate-900">提出履歴</a>
+                </>
+              )
+              : role === "teacher"
               ? (
                 <>
                   <a href="/teacher" class="font-semibold text-slate-700 hover:text-slate-900">教員トップ</a>
@@ -34,6 +42,9 @@ export default define.page(function App(ctx) {
             <span class="ml-auto text-xs text-slate-500">
               {role === "student" ? `出席番号: ${userId}` : `${role}: ${userId}`}
             </span>
+            <form method="post" action="/api/auth/logout">
+              <button type="submit" class="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">ログアウト</button>
+            </form>
           </nav>
         </header>
         <ctx.Component />

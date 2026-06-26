@@ -1,51 +1,12 @@
+import "jsr:@std/dotenv/load";
 import { App, staticFiles } from "fresh";
 import { define, type State } from "./utils.ts";
+import { evaluateAuthGate } from "./lib/auth_gate.ts";
 import { getConfig, shouldLog } from "./lib/config.ts";
 import { resolveAuth } from "./lib/auth.ts";
 
 export const app = new App<State>();
 const config = getConfig();
-
-const BASIC_AUTH_USER = "marugoto";
-const BASIC_AUTH_PASS = "kosen2026";
-
-function unauthorizedBasic(): Response {
-  return new Response("Unauthorized", {
-    status: 401,
-    headers: {
-      "www-authenticate": 'Basic realm="marucoder", charset="UTF-8"',
-    },
-  });
-}
-
-function isBasicAuthorized(req: Request): boolean {
-  const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Basic ")) return false;
-
-  const encoded = auth.slice(6).trim();
-  if (!encoded) return false;
-
-  let decoded = "";
-  try {
-    decoded = atob(encoded);
-  } catch {
-    return false;
-  }
-
-  const separator = decoded.indexOf(":");
-  if (separator < 0) return false;
-
-  const user = decoded.slice(0, separator);
-  const pass = decoded.slice(separator + 1);
-  return user === BASIC_AUTH_USER && pass === BASIC_AUTH_PASS;
-}
-
-app.use((ctx) => {
-  // Preflight は認証不要で通す。
-  if (ctx.req.method === "OPTIONS") return ctx.next();
-  if (!isBasicAuthorized(ctx.req)) return unauthorizedBasic();
-  return ctx.next();
-});
 
 app.use(staticFiles());
 
@@ -56,7 +17,7 @@ app.use((ctx) => {
       headers: {
         "access-control-allow-origin": config.corsOrigin,
         "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS",
-        "access-control-allow-headers": "content-type,x-user-id",
+        "access-control-allow-headers": "content-type,x-user-id,x-user-role",
       },
     });
   }
@@ -67,6 +28,24 @@ app.use((ctx) => {
 app.use(async (ctx) => {
   ctx.state.shared = "hello";
   ctx.state.auth = resolveAuth(ctx.req);
+
+  const url = new URL(ctx.req.url);
+  const pathname = url.pathname;
+  const isApi = pathname.startsWith("/api/");
+  const gate = evaluateAuthGate({ auth: ctx.state.auth, pathname, isApi });
+  if (!gate.allow) {
+    if (gate.redirectTo) {
+      return Response.redirect(new URL(gate.redirectTo, url), gate.status as 301 | 302 | 303 | 307 | 308);
+    }
+    return new Response(
+      JSON.stringify({ code: gate.code, message: gate.code.toLowerCase() }),
+      {
+        status: gate.status,
+        headers: { "content-type": "application/json; charset=utf-8" },
+      },
+    );
+  }
+
   const res = await ctx.next();
   res.headers.set("access-control-allow-origin", config.corsOrigin);
   return res;

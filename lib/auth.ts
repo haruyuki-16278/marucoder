@@ -1,61 +1,43 @@
 import type { State } from "../utils.ts";
-import { forbidden, getCookie, getUserId, unauthorized } from "./http.ts";
+import { forbidden, getCookie, unauthorized } from "./http.ts";
 
-export type AppRole = "teacher" | "student";
+export type AppRole = "admin" | "teacher" | "student";
 
 export type AuthContext = {
   userId: string;
   role: AppRole;
   isAuthenticated: boolean;
+  mustChangePassword: boolean;
 };
 
 function parseRole(raw: string | null): AppRole | null {
-  if (raw === "teacher" || raw === "student") return raw;
+  if (raw === "admin" || raw === "teacher" || raw === "student") return raw;
   return null;
 }
 
-function safeGetEnv(name: string): string | undefined {
-  try {
-    return Deno.env.get(name);
-  } catch {
-    return undefined;
-  }
+function parseBool(raw: string | null): boolean {
+  return raw === "1" || raw === "true";
 }
 
 export function resolveAuth(req: Request): AuthContext {
-  const headerRole = parseRole(req.headers.get("x-user-role"));
-  const url = new URL(req.url);
-  const queryRole = parseRole(url.searchParams.get("role"));
+  const cookieUserId = getCookie(req, "mc_user_id")?.trim() ?? "";
   const cookieRole = parseRole(getCookie(req, "mc_role"));
+  const cookieMustChange = parseBool(getCookie(req, "mc_must_change_password"));
 
-  const role = headerRole ?? queryRole ?? cookieRole;
-  const userId = getUserId(req);
-  const hasExplicitUser =
-    req.headers.get("x-user-id")?.trim() ||
-    url.searchParams.get("userId")?.trim() ||
-    getCookie(req, "mc_user_id")?.trim();
-
-  if (role) {
+  if (cookieUserId && cookieRole) {
     return {
-      userId,
-      role,
+      userId: cookieUserId,
+      role: cookieRole,
       isAuthenticated: true,
+      mustChangePassword: cookieMustChange,
     };
   }
 
-  if (safeGetEnv("AUTH_STRICT") === "1") {
-    return {
-      userId,
-      role: "student",
-      isAuthenticated: false,
-    };
-  }
-
-  // Non-strict mode keeps existing behavior for local development/e2e.
   return {
-    userId: hasExplicitUser || userId,
-    role: "teacher",
-    isAuthenticated: true,
+    userId: "",
+    role: "student",
+    isAuthenticated: false,
+    mustChangePassword: false,
   };
 }
 
@@ -71,7 +53,7 @@ export function requireAuth(state: State): Response | null {
 export function requireTeacher(state: State): Response | null {
   const authError = requireAuth(state);
   if (authError) return authError;
-  if (state.auth.role !== "teacher") {
+  if (state.auth.role !== "teacher" && state.auth.role !== "admin") {
     return forbidden("FORBIDDEN", "teacher role is required");
   }
   return null;
@@ -82,6 +64,24 @@ export function requireStudent(state: State): Response | null {
   if (authError) return authError;
   if (state.auth.role !== "student") {
     return forbidden("FORBIDDEN", "student role is required");
+  }
+  return null;
+}
+
+export function requireAdmin(state: State): Response | null {
+  const authError = requireAuth(state);
+  if (authError) return authError;
+  if (state.auth.role !== "admin") {
+    return forbidden("FORBIDDEN", "admin role is required");
+  }
+  return null;
+}
+
+export function requireAdminOrTeacher(state: State): Response | null {
+  const authError = requireAuth(state);
+  if (authError) return authError;
+  if (state.auth.role !== "admin" && state.auth.role !== "teacher") {
+    return forbidden("FORBIDDEN", "admin or teacher role is required");
   }
   return null;
 }

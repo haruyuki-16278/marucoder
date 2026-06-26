@@ -1,6 +1,6 @@
 import { define } from "../../../utils.ts";
 import { requireTeacher } from "../../../lib/auth.ts";
-import { badRequest, getUserId, json } from "../../../lib/http.ts";
+import { badRequest, json } from "../../../lib/http.ts";
 import { createGroup } from "../../../lib/group_repo.ts";
 
 export const handler = define.handlers({
@@ -19,7 +19,7 @@ export const handler = define.handlers({
       return badRequest("INVALID_REQUEST", "name is required");
     }
 
-    const teacherUserId = getUserId(ctx.req);
+    const teacherUserId = ctx.state.auth.userId;
     const group = await createGroup({
       name: body.name.trim(),
       teacherUserId,
