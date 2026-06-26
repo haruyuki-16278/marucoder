@@ -36,7 +36,10 @@ export async function buildGroupProgress(problemId: string): Promise<ProgressSna
   for (const group of groups) {
     const members = await listGroupMembers(group.id);
     const students = members.filter((m) => m.role === "student");
-    const submissions = await listSubmissions({ groupId: group.id, problemId });
+    const studentIds = new Set(students.map((s) => s.userId));
+    // 提出は groupId:null で保存されるため、problemId のみで取得してユーザーで絞る。
+    const allSubmissions = await listSubmissions({ problemId });
+    const submissions = allSubmissions.filter((s) => studentIds.has(s.userId));
 
     snapshots.push(
       aggregateGroupProgress({
@@ -53,11 +56,16 @@ export async function buildGroupProgress(problemId: string): Promise<ProgressSna
 }
 
 export async function buildSeatProgress(groupId: string, problemId: string): Promise<SeatProgress[]> {
-  const [seats, members, submissions] = await Promise.all([
+  const [seats, members] = await Promise.all([
     listSeats(groupId),
     listGroupMembers(groupId),
-    listSubmissions({ groupId, problemId }),
   ]);
+
+  // 提出は groupId:null で保存されるため groupId フィルターは使わず
+  // problemId のみで取得し、userId ごとに集計する。
+  const memberUserIds = new Set(members.map((m) => m.userId));
+  const allSubmissions = await listSubmissions({ problemId });
+  const submissions = allSubmissions.filter((s) => memberUserIds.has(s.userId));
 
   const memberMap = new Map(members.map((m) => [m.userId, m]));
 
