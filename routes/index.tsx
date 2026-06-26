@@ -2,7 +2,7 @@ import { Head } from "fresh/runtime";
 import { define } from "../utils.ts";
 
 export default define.page(function Home(ctx) {
-  const { role, userId } = ctx.state.auth;
+  const { role } = ctx.state.auth;
 
   return (
     <div class="mx-auto min-h-screen max-w-6xl px-4 py-8">
@@ -11,9 +11,6 @@ export default define.page(function Home(ctx) {
       </Head>
       <section class="rounded border border-slate-200 bg-white p-6">
         <h1 class="text-3xl font-bold text-slate-900">marucoder ホーム</h1>
-        <p class="mt-2 text-slate-600">
-          現在のセッション: {role} / {role === "student" ? `出席番号 ${userId}` : userId}
-        </p>
       </section>
 
       <section class="mt-6 grid gap-4 md:grid-cols-2">
