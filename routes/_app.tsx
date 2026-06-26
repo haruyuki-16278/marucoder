@@ -3,7 +3,6 @@ import { define } from "../utils.ts";
 export default define.page(function App(ctx) {
   const isAuthenticated = ctx.state.auth.isAuthenticated;
   const role = ctx.state.auth.role;
-  const userId = ctx.state.auth.userId;
 
   return (
     <html>
@@ -43,10 +42,7 @@ export default define.page(function App(ctx) {
                         <a href="/student/submissions" class="font-semibold text-slate-700 hover:text-slate-900">自分の提出</a>
                       </>
                     )}
-                  <span class="ml-auto text-xs text-slate-500">
-                    {role === "student" ? `出席番号: ${userId}` : `${role}: ${userId}`}
-                  </span>
-                  <form method="post" action="/api/auth/logout">
+                  <form method="post" action="/api/auth/logout" class="ml-auto">
                     <button type="submit" class="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">ログアウト</button>
                   </form>
                 </>
